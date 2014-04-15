@@ -1,0 +1,35 @@
+#Build script for cm10 tapioca kernel
+echo "Building & packing kernel for CM10 Tapioca"
+
+# select toolchain
+SEL_TC=/home/zoldyck/android/toolchains/android-toolchain-eabi/bin/
+
+# make tapioca defconfig
+ARCH=arm SUBARCH=arm CROSS_COMPILE=${SEL_TC}arm-eabi- make znxt_TAP_defconfig
+# compile kernel
+ARCH=arm SUBARCH=arm CROSS_COMPILE=${SEL_TC}arm-eabi- make -j2
+
+echo "Compiling kernel & modules ..."
+if [ -f arch/arm/boot/zImage ]
+echo "Completed Tapioca build"
+
+then
+
+echo "copy zImage & modules to kernel extracted dir (zapdos) ..."
+cp arch/arm/boot/zImage ~/android/kernel-extracted/module.
+find . -name "*.ko" -exec cp {} ~/android/kernel-extracted/module \;
+
+echo "Packing the kernel using mkelf.py"
+cd ~/android/kernel-extracted/ 
+python mkelf.py -o boot.img zImage@0x00208000 1@0x01400000,ramdisk 2@cmdline
+
+echo "Cut-paste boot.img to kernel-extracted dir (zapdos) ..."
+cp boot.img /home/zoldyck/android/kernels-extracted/
+rm boot.img
+echo "Packed boot.img"
+
+cd ~/android/source/
+
+echo "Done"
+
+fi 
